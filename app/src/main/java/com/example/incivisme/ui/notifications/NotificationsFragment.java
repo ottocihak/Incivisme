@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +28,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.incivisme.R;
 import com.example.incivisme.databinding.FragmentNotificationsBinding;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
 
@@ -41,9 +45,11 @@ public class NotificationsFragment extends Fragment {
     private static final int REQUEST_LOCATION_PERMISSION = 1;
     private NotificationsViewModel notificationsViewModel;
     private FragmentNotificationsBinding binding;
-    private Location mLastLocation;
     private FusedLocationProviderClient mFusedLocationClient;
+    private LocationCallback locationCallback;
     TextView locationTextView;
+    ProgressBar loadingBar;
+    boolean isTracking;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -53,21 +59,35 @@ public class NotificationsFragment extends Fragment {
         binding = FragmentNotificationsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        locationCallback = new LocationCallback () {
+            @Override
+            public void onLocationResult (LocationResult lr) {
+                if (isTracking){
+                    new FetchAddressTask(requireContext()).execute(lr.getLastLocation());
+                }
+            }
+        };
+
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
 
+        loadingBar = binding.loading;
         locationTextView = binding.location;
 
         binding.buttonLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getLocation();
+                if (!isTracking) {
+                    startTrackingLocation();
+                } else stopTrackingLocation();
             }
         });
+
+
 
         return root;
     }
 
-    private void getLocation() {
+    private void startTrackingLocation() {
         if (ActivityCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -76,19 +96,32 @@ public class NotificationsFragment extends Fragment {
                     REQUEST_LOCATION_PERMISSION);
         } else {
             Log.d("-----------------------", "getLocation: ");
-            mFusedLocationClient.getLastLocation().addOnSuccessListener(
-                    location -> {
-                        if (location != null) {
-                            Log.d("-----------------------", "getLocation: ");
-                            new FetchAddressTask(getContext()).execute(location);
-                            locationTextView.setText(getString(R.string.address_text,
-                                    "Loading...",
-                                    System.currentTimeMillis()));
-                        } else {
-                            locationTextView.setText("No location known");
-                        }
-                    });
+            mFusedLocationClient.requestLocationUpdates(
+                    getLocationRequest(),
+                    locationCallback,
+                    null
+            );
+            loadingBar.setVisibility(ProgressBar.VISIBLE);
+            isTracking = true;
+            binding.buttonLocation.setText("Stop location tracking");
         }
+    }
+
+    private void stopTrackingLocation() {
+        if (isTracking) {
+            mFusedLocationClient.removeLocationUpdates (locationCallback);
+            loadingBar.setVisibility(ProgressBar.INVISIBLE);
+            isTracking = false;
+            binding.buttonLocation.setText("Start location tracking");
+        }
+    }
+
+    private LocationRequest getLocationRequest() {
+        LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        return locationRequest;
     }
 
     private class FetchAddressTask extends AsyncTask<Location, Void, String> {
@@ -158,7 +191,7 @@ public class NotificationsFragment extends Fragment {
 
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getLocation();
+                    startTrackingLocation();
                 } else {
                     Toast.makeText(getContext(),
                             "Denied",
