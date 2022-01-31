@@ -177,7 +177,7 @@ public class NotificationsFragment extends Fragment {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            locationTextView.setText(getString(R.string.address_text,
+            locationTextView.setText(getString((R.string.address_text),
                     s, System.currentTimeMillis()));
         }
     }
