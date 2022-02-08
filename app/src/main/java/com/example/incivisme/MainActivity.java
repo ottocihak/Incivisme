@@ -4,18 +4,18 @@ import android.os.Bundle;
 
 import com.example.incivisme.ui.map.MapFragment;
 import com.example.incivisme.ui.notifications.NotificationsFragment;
+import com.firebase.ui.auth.AuthUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.ListFragment;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 
 import com.example.incivisme.databinding.ActivityMainBinding;
+import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -72,6 +72,26 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
 
         nav.setSelectedItemId(R.id.navigation_home);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() == null) {
+            startActivityForResult(
+                    AuthUI.getInstance()
+                            .createSignInIntentBuilder()
+                            .setAvailableProviders(
+                                    Arrays.asList(
+                                            new AuthUI.IdpConfig.EmailBuilder().build(),
+                                            new AuthUI.IdpConfig.GoogleBuilder().build()
+                                    )
+                            )
+                            .build(),
+                    0);
+        }
     }
 
 

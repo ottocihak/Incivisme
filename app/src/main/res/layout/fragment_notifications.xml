@@ -8,6 +8,26 @@
     android:background="@android:color/white"
     tools:context="com.example.incivisme.ui.notifications.NotificationsFragment">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guide_image_portrait"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.65" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout3"
+        android:layout_width="0dp"
+        android:layout_height="200dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="parent">
+
+    </com.google.android.material.textfield.TextInputLayout>
+
     <Button
         android:id="@+id/button_location"
         style="@style/Widget.AppCompat.Button.Colored"
@@ -29,24 +49,15 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guide_image_portrait"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.6" />
 
     <TextView
         android:id="@+id/location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:text="location"
-        app:layout_constraintBottom_toTopOf="@+id/guide_image_portrait"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -55,9 +66,72 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/textview_location"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/hola"
+        android:layout_width="168dp"
+        android:layout_height="50dp"
+
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:hint="Descripció del problema"
+        android:inputType="textMultiLine"
+        android:overScrollMode="always"
+        android:singleLine="false"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/location" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/hola2"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:hint="Descripció del problema"
+        android:inputType="textMultiLine"
+        android:overScrollMode="always"
+        android:singleLine="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/hola" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/hola3"
+        android:layout_width="168dp"
+        android:layout_height="50dp"
+
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:hint="Descripció del problema"
+        android:inputType="textMultiLine"
+        android:overScrollMode="always"
+        android:singleLine="false"
+        app:layout_constraintStart_toEndOf="@+id/hola"
+        app:layout_constraintTop_toBottomOf="@+id/location" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/hola4"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:hint="Descripció del problema"
+        android:inputType="textMultiLine"
+        android:overScrollMode="always"
+        android:singleLine="false"
+        app:layout_constraintBottom_toTopOf="@+id/guide_image_portrait"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/hola2" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
