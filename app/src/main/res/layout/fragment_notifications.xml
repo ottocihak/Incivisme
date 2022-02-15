@@ -33,10 +33,10 @@
         style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Get Location"
+        android:text="Notify"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"/>
+        app:layout_constraintRight_toRightOf="parent" />
 
     <TextView
         android:id="@+id/textview_location"
@@ -51,12 +51,12 @@
 
 
     <TextView
-        android:id="@+id/location"
+        android:id="@+id/notificationTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:text="location"
+        android:text="Notify a problem"
         android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -73,51 +73,51 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/hola"
+        android:id="@+id/notificationFill1"
         android:layout_width="168dp"
         android:layout_height="50dp"
 
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:hint="Descripció del problema"
+        android:hint="Latitude"
         android:inputType="textMultiLine"
         android:overScrollMode="always"
         android:singleLine="false"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/location" />
+        app:layout_constraintTop_toBottomOf="@+id/notificationTitle" />
 
     <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/hola2"
+        android:id="@+id/notificationFill3"
         android:layout_width="0dp"
         android:layout_height="50dp"
 
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:hint="Descripció del problema"
+        android:hint="Address"
         android:inputType="textMultiLine"
         android:overScrollMode="always"
         android:singleLine="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/hola" />
+        app:layout_constraintTop_toBottomOf="@+id/notificationFill1" />
 
     <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/hola3"
+        android:id="@+id/notificationFill2"
         android:layout_width="168dp"
         android:layout_height="50dp"
 
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:hint="Descripció del problema"
+        android:hint="Longitude"
         android:inputType="textMultiLine"
         android:overScrollMode="always"
         android:singleLine="false"
-        app:layout_constraintStart_toEndOf="@+id/hola"
-        app:layout_constraintTop_toBottomOf="@+id/location" />
+        app:layout_constraintStart_toEndOf="@+id/notificationFill1"
+        app:layout_constraintTop_toBottomOf="@+id/notificationTitle" />
 
     <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/hola4"
+        android:id="@+id/notificationFill4"
         android:layout_width="0dp"
         android:layout_height="0dp"
 
@@ -125,13 +125,13 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:hint="Descripció del problema"
+        android:hint="Description of the problem"
         android:inputType="textMultiLine"
         android:overScrollMode="always"
         android:singleLine="false"
         app:layout_constraintBottom_toTopOf="@+id/guide_image_portrait"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/hola2" />
+        app:layout_constraintTop_toBottomOf="@+id/notificationFill3" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
