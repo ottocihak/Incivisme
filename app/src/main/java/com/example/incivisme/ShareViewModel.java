@@ -6,7 +6,6 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationRequest;
 import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.Log;
@@ -16,9 +15,13 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,36 +33,46 @@ public class ShareViewModel extends AndroidViewModel {
     private final Application app;
     private final MutableLiveData<String> currentAddress = new MutableLiveData<>();
     private final MutableLiveData<String> checkPermission = new MutableLiveData<>();
-    private final MutableLiveData<String> buttonText = new MutableLiveData<>();
     private final MutableLiveData<Boolean> progressBar = new MutableLiveData<>();
+    private final MutableLiveData<LatLng> currentPosition = new MutableLiveData<>();
+    private MutableLiveData<FirebaseUser> currentUser = new MutableLiveData<>();
 
     private boolean mTrackingLocation;
     FusedLocationProviderClient mFusedLocationClient;
 
     public ShareViewModel(@NonNull Application application) {
         super(application);
-
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication().getApplicationContext());
         this.app = application;
     }
 
-    void setFusedLocationClient(FusedLocationProviderClient mFusedLocationClient) {
+    public void setFusedLocationClient(FusedLocationProviderClient mFusedLocationClient) {
         this.mFusedLocationClient = mFusedLocationClient;
     }
 
-    LiveData<String> getCurrentAddress() {
+    public LiveData<String> getCurrentAddress() {
         return currentAddress;
     }
 
-    MutableLiveData<String> getButtonText() {
-        return buttonText;
-    }
-
-    MutableLiveData<Boolean> getProgressBar() {
+    public MutableLiveData<Boolean> getProgressBar() {
         return progressBar;
     }
 
-    LiveData<String> getCheckPermission() {
+    public LiveData<String> getCheckPermission() {
         return checkPermission;
+    }
+
+    public LiveData<LatLng> getCurrentPosition () {return currentPosition;}
+
+    public LiveData<FirebaseUser> getCurrentUser () {
+        if (currentUser == null){
+            currentUser = new MutableLiveData<>();
+        }
+        return currentUser;
+    }
+
+    public void setCurrentUser(FirebaseUser currentUser) {
+        this.currentUser.postValue(currentUser);
     }
 
     private LocationCallback mLocationCallback = new LocationCallback() {
@@ -75,41 +88,40 @@ public class ShareViewModel extends AndroidViewModel {
         }
     };
 
-//    private LocationRequest getLocationRequest() {
-//        LocationRequest locationRequest = new LocationRequest();
-//        locationRequest.setInterval(10000);
-//        locationRequest.setFastestInterval(5000);
-//        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-//        return locationRequest;
-//    }
+    private LocationRequest getLocationRequest() {
+        LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        return locationRequest;
+    }
 
-//    void switchTrackingLocation() {
-//        if (!mTrackingLocation) {
-//            startTrackingLocation(true);
-//        } else {
-//            stopTrackingLocation();
-//        }
-//
-//    }
+    public void switchTrackingLocation() {
+        if (!mTrackingLocation) {
+            startTrackingLocation(true);
+        } else {
+            stopTrackingLocation();
+        }
 
-//    @SuppressLint("MissingPermission")
-//    void startTrackingLocation(boolean needsChecking) {
-//        if (needsChecking) {
-//            checkPermission.postValue("check");
-//        } else {
-//            mFusedLocationClient.requestLocationUpdates(
-//                    getLocationRequest(),
-//                    mLocationCallback,
-//                    null
-//            );
-//
-//            currentAddress.postValue("Carregant...");
-//
-//            progressBar.postValue(true);
-//            mTrackingLocation = true;
-//            buttonText.setValue("Aturar el seguiment de la ubicació");
-//        }
-//    }
+    }
+
+    @SuppressLint("MissingPermission")
+    void startTrackingLocation(boolean needsChecking) {
+        if (needsChecking) {
+            checkPermission.postValue("check");
+        } else {
+            mFusedLocationClient.requestLocationUpdates(
+                    getLocationRequest(),
+                    mLocationCallback,
+                    null
+            );
+
+            currentAddress.postValue("Loading...");
+
+            progressBar.postValue(true);
+            mTrackingLocation = true;
+        }
+    }
 
 
     private void stopTrackingLocation() {
@@ -117,7 +129,6 @@ public class ShareViewModel extends AndroidViewModel {
             mFusedLocationClient.removeLocationUpdates (mLocationCallback);
             mTrackingLocation = false;
             progressBar.postValue(false);
-            buttonText.setValue("Comença a seguir la ubicació");
         }
     }
 
@@ -139,15 +150,16 @@ public class ShareViewModel extends AndroidViewModel {
             String resultMessage = "";
 
             try {
+                LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
+                currentPosition.postValue(latLng);
                 addresses = geocoder.getFromLocation(
                         location.getLatitude(),
                         location.getLongitude(),
-                        // En aquest cas, sols volem una única adreça:
                         1);
 
                 if (addresses == null || addresses.size() == 0) {
                     if (resultMessage.isEmpty()) {
-                        resultMessage = "No s'ha trobat cap adreça";
+                        resultMessage = "There was no address found";
                         Log.e(TAG, resultMessage);
                     }
                 } else {
@@ -161,10 +173,10 @@ public class ShareViewModel extends AndroidViewModel {
                     resultMessage = TextUtils.join("\n", addressParts);
                 }
             } catch (IOException ioException) {
-                resultMessage = "Servei no disponible";
+                resultMessage = "Service not available";
                 Log.e(TAG, resultMessage, ioException);
             } catch (IllegalArgumentException illegalArgumentException) {
-                resultMessage = "Coordenades no vàlides";
+                resultMessage = "Coordinates no valid";
                 Log.e(TAG, resultMessage + ". " +
                         "Latitude = " + location.getLatitude() +
                         ", Longitude = " +

@@ -1,25 +1,41 @@
 package com.example.incivisme;
 
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.example.incivisme.ui.map.MapFragment;
 import com.example.incivisme.ui.notifications.NotificationsFragment;
 import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.IdpResponse;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.ListFragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.incivisme.databinding.ActivityMainBinding;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+
+    private static final int REQUEST_LOCATION_PERMISSION = 1;
+    private static final int RC_SIGN_IN = 0;
+    FusedLocationProviderClient fusedLocationClient;
+    private ShareViewModel shareViewModel;
 
     FragmentManager fm = getSupportFragmentManager();
 
@@ -53,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        shareViewModel = new ViewModelProvider(this).get(ShareViewModel.class);
+
         BottomNavigationView nav = findViewById(R.id.navigation);
         nav.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
@@ -72,6 +90,9 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
 
         nav.setSelectedItemId(R.id.navigation_home);
+
+        shareViewModel.setFusedLocationClient(fusedLocationClient);
+        shareViewModel.getCheckPermission().observe(this, permission -> checkPermission());
     }
 
     @Override
@@ -79,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
+        Log.e("XXXX", String.valueOf(auth.getCurrentUser()));
         if (auth.getCurrentUser() == null) {
             startActivityForResult(
                     AuthUI.getInstance()
@@ -90,7 +112,52 @@ public class MainActivity extends AppCompatActivity {
                                     )
                             )
                             .build(),
-                    0);
+                    RC_SIGN_IN);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            IdpResponse response = IdpResponse.fromResultIntent(data);
+
+            if (resultCode == RESULT_OK) {
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                shareViewModel.setCurrentUser(user);
+            }
+        }
+    }
+
+    void checkPermission() {
+        if (ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]
+                            {Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_LOCATION_PERMISSION);
+        }
+        else {
+            shareViewModel.startTrackingLocation(false);
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode==REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                shareViewModel.switchTrackingLocation();
+            } else {
+                Toast.makeText(this,
+                        "Denied",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

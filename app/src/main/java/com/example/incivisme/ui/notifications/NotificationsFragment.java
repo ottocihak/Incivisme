@@ -1,199 +1,113 @@
 package com.example.incivisme.ui.notifications;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.os.AsyncTask;
+
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.incivisme.R;
+import com.example.incivisme.ShareViewModel;
 import com.example.incivisme.databinding.FragmentNotificationsBinding;
+import com.example.incivisme.ui.bs.Notification;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class NotificationsFragment extends Fragment {
 
-    private static final int REQUEST_LOCATION_PERMISSION = 1;
-    private NotificationsViewModel notificationsViewModel;
+    private ShareViewModel shareViewModel;
     private FragmentNotificationsBinding binding;
-    private FusedLocationProviderClient mFusedLocationClient;
-    private LocationCallback locationCallback;
-    TextView locationTextView;
-    ProgressBar loadingBar;
-    boolean isTracking;
+    private ProgressBar loadingBar;
+    private TextInputEditText notifyLat;
+    private TextInputEditText notifyLon;
+    private TextInputEditText notifyAddress;
+    private TextInputEditText notifyDescription;
+    private Button button;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        notificationsViewModel =
-                new ViewModelProvider(this).get(NotificationsViewModel.class);
+        shareViewModel =
+                new ViewModelProvider(requireActivity()).get(ShareViewModel.class);
 
         binding = FragmentNotificationsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        locationCallback = new LocationCallback () {
-            @Override
-            public void onLocationResult (LocationResult lr) {
-                if (isTracking){
-                    new FetchAddressTask(requireContext()).execute(lr.getLastLocation());
-                }
-            }
-        };
+        shareViewModel.setFusedLocationClient(LocationServices.getFusedLocationProviderClient(requireContext()));
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
-
+        button = binding.notifyButton;
         loadingBar = binding.loading;
-        locationTextView = binding.location;
+        notifyLat = binding.notificationFill1;
+        notifyLon = binding.notificationFill2;
+        notifyAddress = binding.notificationFill3;
+        notifyDescription = binding.notificationFill4;
 
-        binding.buttonLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (!isTracking) {
-                    startTrackingLocation();
-                } else stopTrackingLocation();
+        shareViewModel.getCurrentAddress().observe(getViewLifecycleOwner(), address -> {
+            notifyAddress.setText(getString(R.string.address_text, address, System.currentTimeMillis()));
+        });
+
+        shareViewModel.getCurrentPosition().observe(getViewLifecycleOwner(), latLng -> {
+            notifyLat.setText(String.valueOf(latLng.latitude));
+            notifyLon.setText(String.valueOf(latLng.longitude));
+        });
+
+        shareViewModel.getProgressBar().observe(getViewLifecycleOwner(), isVisible -> {
+            if (isVisible){
+                loadingBar.setVisibility(ProgressBar.VISIBLE);
+            } else {
+                loadingBar.setVisibility(ProgressBar.INVISIBLE);
             }
         });
 
+        shareViewModel.switchTrackingLocation();
 
+        button.setOnClickListener(buttonClicked ->{
+            Notification notification = new Notification();
+            notification.setLatitude(notifyLat.getText().toString());
+            notification.setLongitude(notifyLon.getText().toString());
+            notification.setAddress(notifyAddress.getText().toString());
+            notification.setProblem(notifyDescription.getText().toString());
+
+            FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+            DatabaseReference data = FirebaseDatabase.getInstance().getReference();
+
+            DatabaseReference users = data.child("users");
+            DatabaseReference uid = users.child(firebaseAuth.getUid());
+            DatabaseReference notify = uid.child("notifications");
+
+            DatabaseReference reference = notify.push();
+            reference.setValue(notify);
+
+            Toast.makeText(getContext(), "Notified successfully", Toast.LENGTH_SHORT).show();
+        });
 
         return root;
     }
 
-    private void startTrackingLocation() {
-        if (ActivityCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(requireActivity(), new String[]
-                            {Manifest.permission.ACCESS_FINE_LOCATION},
-                    REQUEST_LOCATION_PERMISSION);
-        } else {
-            Log.d("-----------------------", "getLocation: ");
-            mFusedLocationClient.requestLocationUpdates(
-                    getLocationRequest(),
-                    locationCallback,
-                    null
-            );
-            loadingBar.setVisibility(ProgressBar.VISIBLE);
-            isTracking = true;
-            binding.buttonLocation.setText("Stop location tracking");
-        }
-    }
-
-    private void stopTrackingLocation() {
-        if (isTracking) {
-            mFusedLocationClient.removeLocationUpdates (locationCallback);
-            loadingBar.setVisibility(ProgressBar.INVISIBLE);
-            isTracking = false;
-            binding.buttonLocation.setText("Start location tracking");
-        }
-    }
-
-    private LocationRequest getLocationRequest() {
-        LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        return locationRequest;
-    }
-
-    private class FetchAddressTask extends AsyncTask<Location, Void, String> {
-        private final String TAG = FetchAddressTask.class.getSimpleName();
-        private Context myAppContext;
-
-        FetchAddressTask(Context applicationContext) {
-            myAppContext = applicationContext;
-        }
-
-        @Override
-        protected String doInBackground(Location... locations) {
-            Geocoder geocoder = new Geocoder(myAppContext,
-                    Locale.getDefault());
-            Location location = locations[0];
-            List<Address> addresses = null;
-            String resultMessage = "";
-            try {
-                addresses = geocoder.getFromLocation(
-                        location.getLatitude(),
-                        location.getLongitude(),
-                        1);
-            }catch (IOException ioException) {
-                resultMessage = "service not available";
-                Log.e(TAG, resultMessage, ioException);
-            }catch (IllegalArgumentException illegalArgumentException) {
-                resultMessage = "Coordinates not available";
-                Log.e(TAG, resultMessage + "." +
-                        "\nLatitude = " + location.getLatitude() +
-                        "\nLongitude = " + location.getLongitude(),
-                        illegalArgumentException);
-            }
-
-            if (addresses == null || addresses.size() == 0) {
-                if (resultMessage.isEmpty()) {
-                    resultMessage = "Address not found";
-                    Log.e(TAG, resultMessage);
-                }
-            }else {
-                Address address = addresses.get(0);
-                ArrayList<String> addressParts = new ArrayList<>();
-
-                for (int i = 0; i <= address.getMaxAddressLineIndex(); i++) {
-                    addressParts.add(address.getAddressLine(i));
-                }
-
-                resultMessage = TextUtils.join("\n", addressParts);
-            }
-
-            return resultMessage;
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-            locationTextView.setText(getString((R.string.address_text),
-                    s, System.currentTimeMillis()));
-        }
-    }
-
-
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_LOCATION_PERMISSION:
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
 
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startTrackingLocation();
-                } else {
-                    Toast.makeText(getContext(),
-                            "Denied",
-                            Toast.LENGTH_SHORT).show();
-                }
-                break;
-        }
+        DatabaseReference data = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference users = data.child("users");
+
+        shareViewModel.getCurrentUser().observe(getViewLifecycleOwner(), user ->{
+            DatabaseReference uid = users.child(user.getUid());
+            DatabaseReference notify = uid.child("notifications");
+        });
     }
 
     @Override
