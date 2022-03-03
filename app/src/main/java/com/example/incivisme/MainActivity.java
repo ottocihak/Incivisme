@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.incivisme.ui.list.ListNotificationFragment;
 import com.example.incivisme.ui.map.MapFragment;
 import com.example.incivisme.ui.notifications.NotificationsFragment;
 import com.firebase.ui.auth.AuthUI;
@@ -40,10 +41,10 @@ public class MainActivity extends AppCompatActivity {
     FragmentManager fm = getSupportFragmentManager();
 
     final Fragment fragment1 = new NotificationsFragment();
-    final Fragment fragment2 = new ListFragment();
+    final Fragment fragment2 = new ListNotificationFragment();
     final Fragment fragment3 = new MapFragment();
 
-    Fragment active = fragment1;
+    Fragment active = fragment2;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = item -> {
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
-        Log.e("XXXX", String.valueOf(auth.getCurrentUser()));
+
         if (auth.getCurrentUser() == null) {
             startActivityForResult(
                     AuthUI.getInstance()

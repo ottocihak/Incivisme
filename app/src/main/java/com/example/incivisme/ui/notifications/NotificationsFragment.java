@@ -43,6 +43,7 @@ public class NotificationsFragment extends Fragment {
         shareViewModel =
                 new ViewModelProvider(requireActivity()).get(ShareViewModel.class);
 
+
         binding = FragmentNotificationsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
@@ -74,7 +75,7 @@ public class NotificationsFragment extends Fragment {
 
         shareViewModel.switchTrackingLocation();
 
-        button.setOnClickListener(buttonClicked ->{
+        button.setOnClickListener(view ->{
             Notification notification = new Notification();
             notification.setLatitude(notifyLat.getText().toString());
             notification.setLongitude(notifyLon.getText().toString());
@@ -89,25 +90,12 @@ public class NotificationsFragment extends Fragment {
             DatabaseReference notify = uid.child("notifications");
 
             DatabaseReference reference = notify.push();
-            reference.setValue(notify);
+            reference.setValue(notification);
 
             Toast.makeText(getContext(), "Notified successfully", Toast.LENGTH_SHORT).show();
         });
 
         return root;
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        DatabaseReference data = FirebaseDatabase.getInstance().getReference();
-        DatabaseReference users = data.child("users");
-
-        shareViewModel.getCurrentUser().observe(getViewLifecycleOwner(), user ->{
-            DatabaseReference uid = users.child(user.getUid());
-            DatabaseReference notify = uid.child("notifications");
-        });
     }
 
     @Override

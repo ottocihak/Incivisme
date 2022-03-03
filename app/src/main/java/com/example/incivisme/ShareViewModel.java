@@ -37,17 +37,17 @@ public class ShareViewModel extends AndroidViewModel {
     private final MutableLiveData<LatLng> currentPosition = new MutableLiveData<>();
     private MutableLiveData<FirebaseUser> currentUser = new MutableLiveData<>();
 
-    private boolean mTrackingLocation;
-    FusedLocationProviderClient mFusedLocationClient;
+    private boolean trackingLocation;
+    FusedLocationProviderClient fusedLocationClient;
 
     public ShareViewModel(@NonNull Application application) {
         super(application);
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication().getApplicationContext());
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication().getApplicationContext());
         this.app = application;
     }
 
     public void setFusedLocationClient(FusedLocationProviderClient mFusedLocationClient) {
-        this.mFusedLocationClient = mFusedLocationClient;
+        this.fusedLocationClient = mFusedLocationClient;
     }
 
     public LiveData<String> getCurrentAddress() {
@@ -78,7 +78,7 @@ public class ShareViewModel extends AndroidViewModel {
     private LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
-            if (mTrackingLocation) {
+            if (trackingLocation) {
                 new FetchAddressTask(
                         getApplication().getApplicationContext()
                 ).execute(
@@ -97,7 +97,7 @@ public class ShareViewModel extends AndroidViewModel {
     }
 
     public void switchTrackingLocation() {
-        if (!mTrackingLocation) {
+        if (!trackingLocation) {
             startTrackingLocation(true);
         } else {
             stopTrackingLocation();
@@ -110,7 +110,7 @@ public class ShareViewModel extends AndroidViewModel {
         if (needsChecking) {
             checkPermission.postValue("check");
         } else {
-            mFusedLocationClient.requestLocationUpdates(
+            fusedLocationClient.requestLocationUpdates(
                     getLocationRequest(),
                     mLocationCallback,
                     null
@@ -119,30 +119,30 @@ public class ShareViewModel extends AndroidViewModel {
             currentAddress.postValue("Loading...");
 
             progressBar.postValue(true);
-            mTrackingLocation = true;
+            trackingLocation = true;
         }
     }
 
 
     private void stopTrackingLocation() {
-        if (mTrackingLocation) {
-            mFusedLocationClient.removeLocationUpdates (mLocationCallback);
-            mTrackingLocation = false;
+        if (trackingLocation) {
+            fusedLocationClient.removeLocationUpdates (mLocationCallback);
+            trackingLocation = false;
             progressBar.postValue(false);
         }
     }
 
     private class FetchAddressTask extends AsyncTask<Location, Void, String> {
         private final String TAG = FetchAddressTask.class.getSimpleName();
-        private Context mContext;
+        private Context myContext;
 
         FetchAddressTask(Context applicationContext) {
-            mContext = applicationContext;
+            myContext = applicationContext;
         }
 
         @Override
         protected String doInBackground(Location... locations) {
-            Geocoder geocoder = new Geocoder(mContext,
+            Geocoder geocoder = new Geocoder(myContext,
                     Locale.getDefault());
             Location location = locations[0];
 
@@ -179,8 +179,8 @@ public class ShareViewModel extends AndroidViewModel {
                 resultMessage = "Coordinates no valid";
                 Log.e(TAG, resultMessage + ". " +
                         "Latitude = " + location.getLatitude() +
-                        ", Longitude = " +
-                        location.getLongitude(), illegalArgumentException);
+                        ", Longitude = " + location.getLongitude(),
+                        illegalArgumentException);
             }
             return resultMessage;
         }
@@ -189,6 +189,7 @@ public class ShareViewModel extends AndroidViewModel {
         protected void onPostExecute(String address) {
             super.onPostExecute(address);
             currentAddress.postValue(address);
+            progressBar.postValue(false);
         }
     }
 
