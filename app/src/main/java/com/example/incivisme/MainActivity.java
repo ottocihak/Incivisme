@@ -13,17 +13,16 @@ import com.example.incivisme.ui.notifications.NotificationsFragment;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.ListFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.incivisme.databinding.ActivityMainBinding;
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -44,9 +43,9 @@ public class MainActivity extends AppCompatActivity {
     final Fragment fragment2 = new ListNotificationFragment();
     final Fragment fragment3 = new MapFragment();
 
-    Fragment active = fragment2;
+    Fragment active = fragment1;
 
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+    private NavigationBarView.OnItemSelectedListener onItemSelectedListener
             = item -> {
         switch (item.getItemId()) {
             case R.id.navigation_home:
@@ -72,8 +71,11 @@ public class MainActivity extends AppCompatActivity {
 
         shareViewModel = new ViewModelProvider(this).get(ShareViewModel.class);
 
-        BottomNavigationView nav = findViewById(R.id.navigation);
-        nav.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        shareViewModel.setFusedLocationClient(fusedLocationClient);
+        shareViewModel.getCheckPermission().observe(this, permission -> checkPermission());
+
+        NavigationBarView nav = findViewById(R.id.navigation);
+        nav.setOnItemSelectedListener(onItemSelectedListener);
 
         fm.beginTransaction()
                 .add(R.id.fragment_selected, fragment1, "1")
@@ -92,16 +94,13 @@ public class MainActivity extends AppCompatActivity {
 
         nav.setSelectedItemId(R.id.navigation_home);
 
-        shareViewModel.setFusedLocationClient(fusedLocationClient);
-        shareViewModel.getCheckPermission().observe(this, permission -> checkPermission());
     }
 
     @Override
-    public void onStart() {
+    protected void onStart() {
         super.onStart();
-
         FirebaseAuth auth = FirebaseAuth.getInstance();
-
+        Log.e("doLogin: ", "why");
         if (auth.getCurrentUser() == null) {
             startActivityForResult(
                     AuthUI.getInstance()
@@ -114,7 +113,8 @@ public class MainActivity extends AppCompatActivity {
                             )
                             .build(),
                     RC_SIGN_IN);
-        }
+        } else shareViewModel.setCurrentUser(auth.getCurrentUser());
+        Log.e("onStart: ","hola");
     }
 
     @Override
@@ -122,9 +122,10 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == RC_SIGN_IN) {
+            Log.e("doLogin: ", "why 12");
             IdpResponse response = IdpResponse.fromResultIntent(data);
-
             if (resultCode == RESULT_OK) {
+
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 shareViewModel.setCurrentUser(user);
             }
@@ -161,6 +162,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+
 
 
 }

@@ -1,5 +1,6 @@
 package com.example.incivisme.ui.list;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,6 +10,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -26,42 +28,54 @@ public class ListNotificationFragment extends Fragment {
 
 
     private FragmentNotificationListBinding binding;
+    private ShareViewModel shareViewModel;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
 
+        shareViewModel =
+                new ViewModelProvider(requireActivity()).get(ShareViewModel.class);
+
+        Log.e("list", "list ");
 
         binding = FragmentNotificationListBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         DatabaseReference data = FirebaseDatabase.getInstance().getReference();
 
         DatabaseReference users = data.child("users");
-        DatabaseReference uid = users.child(firebaseAuth.getUid());
-        DatabaseReference notifications = uid.child("notifications");
+        shareViewModel.getCurrentUser().observe(getViewLifecycleOwner(), user -> {
+            DatabaseReference uid = users.child(user.getUid());
+            DatabaseReference notifications = uid.child("notifications");
 
-        FirebaseListOptions<Notification> options = new FirebaseListOptions.Builder<Notification>()
-                .setQuery(notifications, Notification.class)
-                .setLayout(R.layout.list_row)
-                .setLifecycleOwner(this)
-                .build();
+            FirebaseListOptions<Notification> options = new FirebaseListOptions.Builder<Notification>()
+                    .setQuery(notifications, Notification.class)
+                    .setLayout(R.layout.list_row)
+                    .setLifecycleOwner(this)
+                    .build();
 
-        FirebaseListAdapter<Notification> adapter = new FirebaseListAdapter<Notification>(options) {
-            @Override
-            protected void populateView(View v, Notification notification, int position) {
-                TextView addressText = v.findViewById(R.id.addressText);
-                TextView descriptionText = v.findViewById(R.id.descriptionText);
+            FirebaseListAdapter<Notification> adapter = new FirebaseListAdapter<Notification>(options) {
+                @Override
+                protected void populateView(View v, Notification notification, int position) {
+                    TextView addressText = v.findViewById(R.id.addressText);
+                    TextView descriptionText = v.findViewById(R.id.descriptionText);
 
-                addressText.setText(notification.getAddress());
-                descriptionText.setText("notification: "+notification.getProblem());
-            }
-        };
+                    addressText.setText(notification.getAddress());
+                    descriptionText.setText("notification: " + notification.getProblem());
+                }
+            };
 
-        ListView listView = binding.notificationList;
-        listView.setAdapter(adapter);
+            ListView listView = binding.notificationList;
+            listView.setAdapter(adapter);
+        });
 
         return root;
+    }
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
     }
 
     @Override

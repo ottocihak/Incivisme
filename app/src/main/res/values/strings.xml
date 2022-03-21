@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">Incivisme</string>
-    <string name="title_activity_main">Incivisme</string>
+    <string name="app_name">Notifications</string>
+    <string name="title_activity_main">Notifications</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
-    <string name="location_text">"Latitude: %1$.4f \n Longitude: %2$.4f \n Time: %3$tr"</string>
-    <string name="address_text">"Address: %1$s \n Time: %2$tr"</string>
+    <string name="location_text">"Latitude: %1$.4f \nLongitude: %2$.4f \n Time: %3$tr"</string>
+    <string name="address_text">"Address: %1$s \nTime: %2$tr"</string>
 </resources>

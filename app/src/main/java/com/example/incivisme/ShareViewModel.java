@@ -22,6 +22,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class ShareViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> progressBar = new MutableLiveData<>();
     private final MutableLiveData<LatLng> currentPosition = new MutableLiveData<>();
     private MutableLiveData<FirebaseUser> currentUser = new MutableLiveData<>();
+    private MutableLiveData<DatabaseReference> notificationRef = new MutableLiveData<>();
 
     private boolean trackingLocation;
     FusedLocationProviderClient fusedLocationClient;
@@ -43,6 +45,7 @@ public class ShareViewModel extends AndroidViewModel {
     public ShareViewModel(@NonNull Application application) {
         super(application);
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplication().getApplicationContext());
+        Log.e("sharedView", "ShareViewModel ");
         this.app = application;
     }
 
@@ -62,14 +65,17 @@ public class ShareViewModel extends AndroidViewModel {
         return checkPermission;
     }
 
-    public LiveData<LatLng> getCurrentPosition () {return currentPosition;}
+    public MutableLiveData<LatLng> getCurrentPosition () {return currentPosition;}
 
     public LiveData<FirebaseUser> getCurrentUser () {
         if (currentUser == null){
             currentUser = new MutableLiveData<>();
         }
+        Log.e("sharedView", "ShareViewModel "+currentUser.getValue());
         return currentUser;
     }
+
+    public LiveData<DatabaseReference> getNotificationRef () {return notificationRef;}
 
     public void setCurrentUser(FirebaseUser currentUser) {
         this.currentUser.postValue(currentUser);
@@ -142,6 +148,7 @@ public class ShareViewModel extends AndroidViewModel {
 
         @Override
         protected String doInBackground(Location... locations) {
+            Log.e("doIt", "do it ");
             Geocoder geocoder = new Geocoder(myContext,
                     Locale.getDefault());
             Location location = locations[0];

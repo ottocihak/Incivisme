@@ -6,14 +6,16 @@ public class Notification {
     String longitude;
     String address;
     String problem;
+    String pic;
 
     public Notification(){}
 
-    public Notification(String latitude, String longitude, String address, String problem) {
+    public Notification(String latitude, String longitude, String address, String problem, String pic) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.address = address;
         this.problem = problem;
+        this.pic = pic;
     }
 
     public String getLatitude() {
@@ -48,5 +50,11 @@ public class Notification {
         this.problem = problem;
     }
 
+    public String getPic() {
+        return pic;
+    }
 
+    public void setPic(String pic) {
+        this.pic = pic;
+    }
 }
